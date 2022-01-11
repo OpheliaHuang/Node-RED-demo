@@ -1,0 +1,167 @@
+[
+    {
+        "id": "d3ad394422e225a7",
+        "type": "tab",
+        "label": "News API",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3908d79b9db10ec7",
+        "type": "http in",
+        "z": "d3ad394422e225a7",
+        "name": "Get all current news",
+        "url": "/all",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 280,
+        "wires": [
+            [
+                "4c4bf26372b1bfbd"
+            ]
+        ]
+    },
+    {
+        "id": "4c4bf26372b1bfbd",
+        "type": "http request",
+        "z": "d3ad394422e225a7",
+        "name": "Get BBC news feed",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://feeds.bbci.co.uk/news/uk/rss.xml",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "x": 480,
+        "y": 280,
+        "wires": [
+            [
+                "e2409a59647a9c80"
+            ]
+        ]
+    },
+    {
+        "id": "6f797e4fd13ae0e8",
+        "type": "http response",
+        "z": "d3ad394422e225a7",
+        "name": "HTML output",
+        "statusCode": "",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "x": 1370,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "795082ab0f8f75a3",
+        "type": "debug",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1250,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "e2409a59647a9c80",
+        "type": "xml",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "property": "payload",
+        "attr": "",
+        "chr": "",
+        "x": 720,
+        "y": 220,
+        "wires": [
+            [
+                "96156c49ba419871"
+            ]
+        ]
+    },
+    {
+        "id": "44cf92285bbc386d",
+        "type": "html",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "property": "payload",
+        "outproperty": "payload",
+        "tag": "",
+        "ret": "html",
+        "as": "single",
+        "x": 480,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cdd36ae17b86f92f",
+        "type": "function",
+        "z": "d3ad394422e225a7",
+        "name": "Access RSS data",
+        "func": "var news_all = msg.payload.rss.channel[0].item;\n\n// only collect necessary data\nvar news = news_all.map(function (data){\n    return {\n            \"description\": data.description[0],\n            \"link\" : data.link[0],\n            \"published\": data.pubDate[0],\n            \"title\" : data.title[0]\n\n            };\n});\n\n// sort data by time in descending form\nvar news_sorted = news.sort(\n    function (item1, item2){\n        // get time value\n        var item1_time = item1.published.split(\",\")[1];\n        var item2_time = item2.published.split(\",\")[1];\n        \n        // parse time into unix time\n        var item1_unix_time= Date.parse(item1_time);\n        var item2_unix_time= Date.parse(item2_time);\n        \n        return item2_unix_time - item1_unix_time;\n        \n    })\n\n// put everything under article category\nmsg.payload = {\"articles\" : news};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1070,
+        "y": 220,
+        "wires": [
+            [
+                "6f797e4fd13ae0e8",
+                "795082ab0f8f75a3"
+            ]
+        ]
+    },
+    {
+        "id": "96156c49ba419871",
+        "type": "json",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 890,
+        "y": 320,
+        "wires": [
+            [
+                "cdd36ae17b86f92f",
+                "795082ab0f8f75a3"
+            ]
+        ]
+    },
+    {
+        "id": "9ef38cc26ae26d79",
+        "type": "sort",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "order": "ascending",
+        "as_num": false,
+        "target": "payload",
+        "targetType": "msg",
+        "msgKey": "payload",
+        "msgKeyType": "elem",
+        "seqKey": "payload",
+        "seqKeyType": "msg",
+        "x": 700,
+        "y": 480,
+        "wires": [
+            []
+        ]
+    }
+]
