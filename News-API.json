@@ -1,0 +1,308 @@
+[
+    {
+        "id": "d3ad394422e225a7",
+        "type": "tab",
+        "label": "News API",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3908d79b9db10ec7",
+        "type": "http in",
+        "z": "d3ad394422e225a7",
+        "name": "Get all current news",
+        "url": "/all",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 250,
+        "y": 220,
+        "wires": [
+            [
+                "8d7e4cf545128284",
+                "4c4bf26372b1bfbd"
+            ]
+        ]
+    },
+    {
+        "id": "4c4bf26372b1bfbd",
+        "type": "http request",
+        "z": "d3ad394422e225a7",
+        "name": "Get BBC news feed",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://feeds.bbci.co.uk/news/uk/rss.xml",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "x": 520,
+        "y": 280,
+        "wires": [
+            [
+                "e2409a59647a9c80"
+            ]
+        ]
+    },
+    {
+        "id": "6f797e4fd13ae0e8",
+        "type": "http response",
+        "z": "d3ad394422e225a7",
+        "name": "HTML output",
+        "statusCode": "",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "x": 1670,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "e2409a59647a9c80",
+        "type": "xml",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "property": "payload",
+        "attr": "",
+        "chr": "",
+        "x": 730,
+        "y": 240,
+        "wires": [
+            [
+                "96156c49ba419871"
+            ]
+        ]
+    },
+    {
+        "id": "96156c49ba419871",
+        "type": "json",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 870,
+        "y": 240,
+        "wires": [
+            [
+                "714278d617d34ed5"
+            ]
+        ]
+    },
+    {
+        "id": "8d7e4cf545128284",
+        "type": "http request",
+        "z": "d3ad394422e225a7",
+        "name": "Get Sky news feed",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://feeds.skynews.com/feeds/rss/uk.xml",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "x": 530,
+        "y": 180,
+        "wires": [
+            [
+                "e2409a59647a9c80"
+            ]
+        ]
+    },
+    {
+        "id": "d499b5f7fbe09b92",
+        "type": "join",
+        "z": "d3ad394422e225a7",
+        "name": "wait for both responses",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "num",
+        "reduceFixup": "",
+        "x": 1290,
+        "y": 240,
+        "wires": [
+            [
+                "c5b5d08afd0f6ecf"
+            ]
+        ]
+    },
+    {
+        "id": "714278d617d34ed5",
+        "type": "function",
+        "z": "d3ad394422e225a7",
+        "name": "Access RSS data",
+        "func": "var news_all = msg.payload.rss.channel[0].item;\n\n// only collect necessary data\nvar news = news_all.map(function (data){\n    return {\n            \"description\": data.description[0],\n            \"link\" : data.link[0],\n            \"published\": data.pubDate[0],\n            \"title\" : data.title[0]\n\n            };\n});\n/*\n// sort data by time in descending form\nvar news_sorted = news.sort(\n    function (item1, item2){\n        // get time value\n        var item1_time = item1.published.split(\",\")[1];\n        var item2_time = item2.published.split(\",\")[1];\n        \n        // parse time into unix time\n        var item1_unix_time= Date.parse(item1_time);\n        var item2_unix_time= Date.parse(item2_time);\n        \n        return item2_unix_time - item1_unix_time;\n        \n    })\n*/\nmsg.payload = news;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1050,
+        "y": 240,
+        "wires": [
+            [
+                "d499b5f7fbe09b92"
+            ]
+        ]
+    },
+    {
+        "id": "c5b5d08afd0f6ecf",
+        "type": "function",
+        "z": "d3ad394422e225a7",
+        "name": "combine",
+        "func": "msg.payload = [\n    ...msg.payload[0], \n    ...msg.payload[1]\n];\n\nvar news_all = msg.payload;\n\n// sort data by time in descending form\nvar news_sorted = news_all.sort(\n    function (item1, item2){\n        // get time value\n        var item1_time = item1.published.split(\",\")[1];\n        var item2_time = item2.published.split(\",\")[1];\n        \n        // parse time into unix time\n        var item1_unix_time= Date.parse(item1_time);\n        var item2_unix_time= Date.parse(item2_time);\n        \n        return item2_unix_time - item1_unix_time;\n        \n    })\n\nmsg.payload = news_all;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1500,
+        "y": 240,
+        "wires": [
+            [
+                "6f797e4fd13ae0e8",
+                "22b12d4f9ddbded0",
+                "48c08d648aaadda6"
+            ]
+        ]
+    },
+    {
+        "id": "22b12d4f9ddbded0",
+        "type": "ui_table",
+        "z": "d3ad394422e225a7",
+        "group": "74d3bc6d.dd56e4",
+        "name": "News Table",
+        "order": 2,
+        "width": "27",
+        "height": "10",
+        "columns": [
+            {
+                "field": "published",
+                "title": "Date",
+                "width": "25%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "title",
+                "title": "Title",
+                "width": "25%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "description",
+                "title": "Content",
+                "width": "25%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "link",
+                "title": "Link",
+                "width": "",
+                "align": "left",
+                "formatter": "link",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            }
+        ],
+        "outputs": 0,
+        "cts": false,
+        "x": 1730,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "39ed94aa8e98b4e4",
+        "type": "inject",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 200,
+        "y": 100,
+        "wires": [
+            [
+                "8d7e4cf545128284",
+                "4c4bf26372b1bfbd"
+            ]
+        ]
+    },
+    {
+        "id": "48c08d648aaadda6",
+        "type": "debug",
+        "z": "d3ad394422e225a7",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1630,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "74d3bc6d.dd56e4",
+        "type": "ui_group",
+        "name": "Table",
+        "tab": "6fc9e7af.0b5ce8",
+        "order": 1,
+        "disp": true,
+        "width": "27",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "6fc9e7af.0b5ce8",
+        "type": "ui_tab",
+        "name": "Tabletest",
+        "icon": "dashboard",
+        "order": 16,
+        "disabled": false,
+        "hidden": false
+    }
+]
