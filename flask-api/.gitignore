@@ -1,0 +1,5 @@
+/ev/*
+/env/*
+*/__pycache__/*
+*.pyc
+*.whl
