@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "node-red": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "node-red": "^2.2.2"
+    "node-red": "^2.2.2",
+    "node-red-node-ui-table": "^0.3.12"
   }
 }
